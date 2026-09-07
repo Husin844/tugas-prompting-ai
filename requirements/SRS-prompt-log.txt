@@ -1,0 +1,28 @@
+[Peran]
+Kamu adalah requirements analyst senior.
+
+[Tugas]
+Ubah PRD "Wastify" berikut menjadi DRAF SRS ringkas.
+
+[Konteks]
+PRD hasil revisi:
+<TEMPEL_SELURUH_TEKS_PRD_YANG_SEBELUMNYA_DIBUAT_DI_SINI>
+
+Acuan kualitas: ISO/IEC 25010 (Fokuskan pada: Performance Efficiency, Usability, Security, dan Reliability)
+Prioritas: MoSCoW
+Platform & stack: Mobile (Android / Kotlin), arsitektur MVVM, Firebase (Auth, Storage, Realtime Database), model TensorFlow Lite (TFLite) untuk klasifikasi offline/lokal.
+
+[Format output]
+1) Tujuan, scope, definisi istilah;
+2) User & stakeholder, lingkungan operasi, asumsi & dependensi;
+3) FR: tabel FR-01..FR-n dengan pola "Sistem harus dapat <aksi> <objek> saat <kondisi> -> <output>" + kolom ID, prioritas MoSCoW, metode verifikasi;
+4) NFR: tabel NFR-01..NFR-m kategori ISO/IEC 25010 + metrik target + kondisi ukur. (Wajib memuat: akurasi model AI, latensi/kecepatan inferensi AI, keamanan autentikasi, privasi data, dan usability);
+5) Kebutuhan data minimum fitur AI (input gambar dari kamera -> output prediksi kelas & probabilitas);
+6) Aturan bisnis hasil riset;
+7) Matriks traceability: FR/NFR terhubung ke fitur PRD terkait.
+
+[Aturan]
+Setiap FR/NFR harus dapat ditelusuri ke bukti pada PRD/riset; dilarang menambah kebutuhan baru yang tidak ada buktinya di PRD.
+Bila pembahasan mulai masuk arsitektur teknis mendalam atau desain UI, hentikan (itu urusan dokumen HLD/LLD).
+Semua batasan NFR harus dapat diukur (testable), hindari kata sifat kosong/ambigu seperti "cepat", "mudah", atau "aman" tanpa indikator numerik.
+Gunakan Bahasa Indonesia baku dan format Markdown.
