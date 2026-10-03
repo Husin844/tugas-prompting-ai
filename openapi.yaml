@@ -1,0 +1,338 @@
+openapi: 3.0.3
+info:
+  title: Wastify API Service
+  version: 1.0.0
+  description: >
+    Spesifikasi REST API untuk aplikasi Wastify (Mobile Android & Backend Pendukung).
+    Menangani manajemen pengguna, sinkronisasi riwayat pemindaian sampah, serta katalog edukasi.
+    [ASUMSI-01]: Inferensi model AI utama berjalan secara on-device (offline) menggunakan TFLite,
+    sementara endpoint /predictions digunakan untuk sinkronisasi hasil scan dan pencatatan riwayat.
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development Server (Local FastAPI)
+  - url: https://api.wastify.app/v1
+    description: Production Server (Placeholder)
+
+paths:
+  /users/register:
+    post:
+      summary: Pendaftaran Akun Pengguna Baru
+      description: Mendaftarkan akun baru ke sistem backend dan menyimpan kredensial dengan enkripsi hash.
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        '201':
+          description: Akun berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Data input tidak valid atau email sudah terdaftar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Kesalahan validasi format skema data (Unprocessable Entity)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Kesalahan internal server (Internal Server Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/login:
+    post:
+      summary: Autentikasi Pengguna (Login)
+      description: Memvalidasi email dan password pengguna, serta mengembalikan token akses sesi.
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: Login berhasil dan token akses diterbitkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Autentikasi gagal (kredensial salah atau tidak terdaftar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Format data masukan tidak sesuai
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Kesalahan server internal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /histories:
+    post:
+      summary: Menyimpan Riwayat Pemindaian Sampah
+      description: Menyinkronkan dan menyimpan data hasil klasifikasi pemindaian sampah dari perangkat ke database server.
+      tags:
+        - AI
+        - Histories
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScanHistoryRequest'
+      responses:
+        '201':
+          description: Riwayat pemindaian berhasil disimpan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanHistoryResponse'
+        '400':
+          description: Format payload tidak lengkap atau salah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Token akses tidak valid atau kedaluwarsa (Unauthorized)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Kesalahan database server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Mendapatkan Daftar Riwayat Pemindaian Pengguna
+      description: Mengambil seluruh riwayat pemindaian sampah yang pernah dilakukan oleh pengguna tertentu.
+      tags:
+        - Histories
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID unik pengguna
+      responses:
+        '200':
+          description: Daftar riwayat berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScanHistoryResponse'
+        '401':
+          description: Sesi tidak terautentikasi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Data riwayat pengguna tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Kesalahan internal server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /catalogs:
+    get:
+      summary: Mengambil Katalog Informasi Jenis Sampah
+      description: Menyediakan daftar panduan edukasi jenis sampah dan cara pengelolaan mandirinya.
+      tags:
+        - Catalogs
+      responses:
+        '200':
+          description: Berhasil mengambil daftar katalog edukasi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogItemResponse'
+        '404':
+          description: Data katalog tidak tersedia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Kesalahan internal server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UserRegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          example: Budi Pratama
+        email:
+          type: string
+          format: email
+          example: budi.user@email.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: SecurePassword123
+
+    UserLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: budi.user@email.com
+        password:
+          type: string
+          format: password
+          example: SecurePassword123
+
+    UserResponse:
+      type: object
+      properties:
+        uid:
+          type: string
+          example: usr_9f83a7bc1234
+        name:
+          type: string
+          example: Budi Pratama
+        email:
+          type: string
+          format: email
+          example: budi.user@email.com
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-10-03T12:00:00Z'
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          example: bearer
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    ScanHistoryRequest:
+      type: object
+      required:
+        - user_id
+        - category_name
+        - is_recyclable
+        - confidence_score
+      properties:
+        user_id:
+          type: string
+          example: usr_9f83a7bc1234
+        category_name:
+          type: string
+          example: Plastik PET
+        is_recyclable:
+          type: boolean
+          example: true
+        confidence_score:
+          type: number
+          format: float
+          example: 0.89
+
+    ScanHistoryResponse:
+      type: object
+      properties:
+        history_id:
+          type: string
+          example: hst_1122334455
+        user_id:
+          type: string
+          example: usr_9f83a7bc1234
+        category_name:
+          type: string
+          example: Plastik PET
+        is_recyclable:
+          type: boolean
+          example: true
+        confidence_score:
+          type: number
+          format: float
+          example: 0.89
+        timestamp:
+          type: integer
+          example: 1727978400000
+
+    CatalogItemResponse:
+      type: object
+      properties:
+        catalog_id:
+          type: string
+          example: cat_01
+        title:
+          type: string
+          example: Panduan Pengelolaan Botol Plastik PET
+        description:
+          type: string
+          example: Pastikan botol dicuci bersih dan dilepas labelnya sebelum dimasukkan ke tempat daur ulang.
+        category_type:
+          type: string
+          example: Anorganik / Daur Ulang
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+          example: INVALID_CREDENTIALS
+        message:
+          type: string
+          example: Email atau password yang Anda masukkan salah.
+        status:
+          type: integer
+          example: 401
