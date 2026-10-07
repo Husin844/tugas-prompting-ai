@@ -1,39 +1,18 @@
+## 3.3 Alur Penelitian
+
+Alur penelitian ini dirancang menggunakan pendekatan rekayasa perangkat lunak **Metode Prototype** yang diintegrasikan dengan tahapan pengembangan model *Deep Learning* (*Computer Vision Workflow*). Prosedur dan urutan langkah penelitian secara sistematis divisualisasikan pada Gambar 3.1 berikut:
+
+```mermaid
 flowchart TD
-    Start([Akses Website Laravel]) --> ChooseRole{Pilih Menu / Aktor}
-
-    %% --- AKTOR 1: ADMIN ---
-    ChooseRole -- Admin --> AdminLogin[Input Username & Password] --> ValAdmin{Valid?}
-    ValAdmin -- Tidak --> ErrAdmin[Tampilkan Pesan Error Login] --> AdminLogin
-    ValAdmin -- Ya --> AdminDashboard([Dashboard Admin])
-    AdminDashboard --> ManageData[Kelola Data Master / Kategori Sampah & Tong]
-    AdminDashboard --> ViewLogs[Pantau Riwayat / Log Pemindaian Sistem]
-    ManageData --> AdminEnd([Selesai / Logout])
-    ViewLogs --> AdminEnd
-
-    %% --- AKTOR 2: USER (MASYARAKAT) ---
-    ChooseRole -- User --> HomeUser([Halaman Utama / Pemindai Real-Time])
-    HomeUser --> ActiveCam[Aktifkan Kamera Peramban / Web Browser]
-    ActiveCam --> CaptureFrame[Tangkap Citra / Frame Video Sampah]
+    Start([MULAI]) --> Step1[1. Studi Literatur & Analisis Kebutuhan]
+    Step1 --> Step2[2. Pengumpulan & Preprocessing Dataset]
+    Step2 --> Step3[3. Pemodelan & Pelatihan Deep Learning]
+    Step3 --> Step4[4. Perancangan & Pembangunan Sistem Prototype]
+    Step4 --> Step5[5. Pengujian & Evaluasi Sistem]
     
-    CaptureFrame --> Preprocess[Preprocessing Citra & Normalisasi]
-    Preprocess --> TFLiteInference[Eksekusi Model TensorFlow Lite .tflite]
+    Step5 --> Check{Sesuai Kebutuhan?}
     
-    TFLiteInference --> CheckConf{Confidence Score >= Threshold?}
-    CheckConf -- Rendah (<50%) --> LowConf[Minta Pengguna Merapikan Posisi / Pencahayaan Kamera] --> ActiveCam
+    Check -- Tidak --> Fix[Perbaikan / Penyesuaian Prototype] --> Step4
+    Check -- Ya --> Step6[6. Implementasi & Penyerahan Akhir]
     
-    CheckConf -- Tinggi (>=50%) --> DisplayResult[Tampilkan Hasil Deteksi:]
-    
-    %% --- DETAIL LUARAN / OUTPUT & PANDUAN TONG SAMPAH ---
-    DisplayResult --> ShowDetail[ - Nama Kelas Spesifik & % Akurasi\n - Kategori Utama: Organik / Anorganik\n - Sub-Kategori Limbah]
-    
-    ShowDetail --> GuideBin{Pencocokan Panduan Warna Tong Sampah}
-    
-    GuideBin --> BinGreen[Organik ➔ Tong Sampah Warna Hijau]
-    GuideBin --> BinYellow[Anorganik / Daur Ulang ➔ Tong Sampah Warna Kuning]
-    GuideBin --> BinRed[Limbah B3 ➔ Tong Sampah Warna Merah]
-    
-    BinGreen --> SaveHistory[Simpan Log / Riwayat ke Database MySQL]
-    BinYellow --> SaveHistory
-    BinRed --> SaveHistory
-    
-    SaveHistory --> UserEnd([Selesai])
+    Step6 --> End([SELESAI])
